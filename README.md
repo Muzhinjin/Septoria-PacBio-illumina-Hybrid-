@@ -12,7 +12,87 @@ trimmomatic PE -threads 4 -trimlog NameLog SLMR.L350_FDSW250082146-1r_1.fq.clean
 
 ragtag.py patch SLMRcontigs.fasta Illuminaseptoriacontigs.fasta
 
+1. Data Quality Control
+bash
+# For Illumina data
+fastqc illumina_*.fastq.gz -o fastqc_results
+multiqc fastqc_results -o multiqc_report
 
+# For PacBio data
+pbqc SLRM.bam LMR.bam -o pacbio_quality
+2. Hybrid Genome Assembly
+Option A: Using Unicycler (good for bacterial/small genomes)
+bash
+unicycler -1 illumina_R1.fastq.gz -2 illumina_R2.fastq.gz \
+          -l pacbio.fastq.gz -o hybrid_assembly
+Option B: Using SPAdes with hybrid option
+bash
+spades.py --pe1-1 illumina_R1.fastq.gz --pe1-2 illumina_R2.fastq.gz \
+          --pacbio pacbio.fastq.gz -o spades_hybrid_assembly
+Option C: Using Flye + Polishing (for larger genomes)
+bash
+# Initial PacBio assembly
+flye --pacbio-raw pacbio.fastq.gz --out-dir flye_output --threads 16
+
+# Polish with Illumina
+bwa index flye_output/assembly.fasta
+bwa mem flye_output/assembly.fasta illumina_R1.fastq.gz illumina_R2.fastq.gz | \
+    samtools sort -o aligned.bam
+pilon --genome flye_output/assembly.fasta --frags aligned.bam --output pilon_polished
+3. Assembly Evaluation
+bash
+quast.py hybrid_assembly/assembly.fasta -o assembly_quality
+busco -i hybrid_assembly/assembly.fasta -l basidiomycota_odb10 -o busco_results -m genome
+4. Chromosome-level Scaffolding
+bash
+# Using Hi-C data if available
+juicer.sh -g genome_size -d juicer_output -s restriction_site hybrid_assembly/assembly.fasta
+3d-dna hybrid_assembly/assembly.fasta merged_nodups.txt
+
+# Or using RagTag with reference
+ragtag.py scaffold reference_genome.fasta hybrid_assembly/assembly.fasta -o ragtag_output
+5. Annotation Pipeline (Enhanced with RNA-seq if available)
+bash
+funannotate predict -i ragtag_output/ragtag.scaffolds.fasta \
+                    -o annotation_output \
+                    -s "Species name" \
+                    --busco_db basidiomycota \
+                    --rna_bam rna_seq.bam \
+                    --pasa_gff pasa_annotations.gff
+6. Specialized Analyses
+Effector prediction (with additional filters):
+bash
+# First run SignalP and TMHMM
+signalp -f short -m signalp_results annotation_output/proteins.fa
+tmhmm annotation_output/proteins.fa > tmhmm_results.txt
+
+# Then run EffectorP with filtered set
+EffectorP.py -i secreted_proteins.fa -o effector_results
+Comprehensive CAZyme analysis:
+bash
+# Run dbCAN2
+run_dbcan.py annotation_output/proteins.fa protein --out_dir dbcan_results --tools all
+
+# Add CUPP classification
+cupp.py -i dbcan_results/overview.txt -o cupp_results
+Secondary metabolite clusters:
+bash
+# Run antiSMASH with full options
+antismash --cb-general --cb-knownclusters --cb-subclusters --asf \
+          --pfam2go --smcog-trees --genefinding-tool prodigal \
+          -c 20 ragtag_output/ragtag.scaffolds.fasta \
+          -o antismash_results
+7. Integrated Visualization
+bash
+# Create JBrowse2 instance with all annotations
+jbrowse create -i ragtag_output/ragtag.scaffolds.fasta \
+               -g annotation_output/predict_results/genes.gff3 \
+               -t annotation_output/predict_results/genes.fasta \
+               --out genome_browser
+
+# Add additional tracks
+jbrowse add-track effector_results/effectors.gff --load copy
+jbrowse add-track dbcan_results/overview.gff --load copy
 
 
 
