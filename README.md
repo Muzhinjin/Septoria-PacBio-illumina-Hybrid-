@@ -59,3 +59,148 @@ seqtk seq
    awk 'BEGIN {RS=">"; ORS=""} length($2) < 300 {print ">"$0}' SLMR.signalp_proteins.fa > SLMR.small_secreted1.fa
 
 
+# Chromosome-Level Assembly Without Reference Genome or RNA-seq
+
+Since you want to achieve chromosome-level assembly without a reference genome or RNA-seq data, we'll need to rely on alternative scaffolding methods. Here are the best approaches given your available data:
+
+## 1. Initial High-Quality Hybrid Assembly
+
+First, create the best possible contig assembly using both data types:
+
+```bash
+# Using MaSuRCA (excellent for fungal genomes)
+masurca -g 50m -t 16 \
+        -i clean_R1.fq.gz,clean_R2.fq.gz \
+        -r pacbio_SLRM.fq,pacbio_LMR.fq \
+        -o masurca_config.txt
+./assemble.sh masurca_config.txt
+```
+
+## 2. Chromosome-Scale Scaffolding Options
+
+### Option A: Hi-C Scaffolding (if you can generate Hi-C data)
+```bash
+# Process Hi-C data
+juicer.sh -g 50m -d juicer_out -s MboI \
+          -p chrom.sizes \
+          -y restriction_sites.txt \
+          masurca_assembly.fasta \
+          hic_R1.fq.gz hic_R2.fq.gz
+
+# Create chromosome scaffolds
+3d-dna masurca_assembly.fasta juicer_out/merged_nodups.txt
+```
+
+### Option B: Optical Mapping (if you can generate Bionano data)
+```bash
+# Run Bionano Solve
+solve -T 16 -f 0.3 -N 2 \
+      -R bionano.cmap \
+      -G masurca_assembly.fasta \
+      -o bionano_scaffolds
+```
+
+### Option C: Using Your PacBio BAM Files for Ultra-Long Scaffolding
+```bash
+# Extract ultra-long reads from BAM files
+samtools view -F 3844 SLRM.bam | awk 'length($10) > 50000' > ultra_long.fq
+
+# Scaffold with LINKS
+LINKS -f masurca_assembly.fasta -s empty.fof -k 20 -b ultra_long.fq
+```
+
+### Option D: De Novo Chromosome Reconstruction (for fungi)
+```bash
+# Using Salsa2 with PacBio data
+samtools faidx masurca_assembly.fasta
+bwa index masurca_assembly.fasta
+bwa mem -x pacbio masurca_assembly.fasta pacbio_combined.fq | \
+    samtools view -Sb - > pacbio_aligned.bam
+samtools sort -o pacbio_aligned.sorted.bam pacbio_aligned.bam
+samtools index pacbio_aligned.sorted.bam
+
+run_pipeline.pl -Xmx100G -deNovoPipeline \
+    -overlapTrimmer KEEP_INTEGRITY=false \
+    -fastq1 pacbio_combined.fq \
+    -output salsa_scaffolds \
+    -iF 10 -iC 50
+```
+
+## 3. Chromosome Validation
+
+```bash
+# Check chromosome-length scaffolds
+assembly-stats chromosome_assembly.fasta
+
+# Validate with BUSCO
+busco -i chromosome_assembly.fasta -l basidiomycota_odb10 -o busco_chrom -m genome
+
+# Check synteny with related species (if any genes available)
+mummer -mum -b -c ref_genome.fasta chromosome_assembly.fasta > mummer_out.txt
+```
+
+## 4. Chromosome Annotation
+
+```bash
+# Using Funannotate with chromosome-aware settings
+funannotate predict -i chromosome_assembly.fasta \
+                    -o chrom_annotation \
+                    --busco_db basidiomycota \
+                    --repeats2evm \
+                    --optimize_augustus \
+                    --ploidy 1 \
+                    --organism fungus
+```
+
+## 5. Visualization of Chromosomes
+
+```bash
+# Create a Circos plot
+circos -conf circos.conf -outputdir circos_output
+
+# Generate JBrowse with chromosome view
+jbrowse create -i chromosome_assembly.fasta \
+               -g chrom_annotation/predict_results/genes.gff3 \
+               --out chrom_browser \
+               --tracks chromosomes
+```
+
+## Key Considerations Without Reference:
+
+1. **Assembly Metrics**:
+   - N50 should be dramatically higher than contig assembly
+   - Expected chromosome count based on literature for your organism
+   - Telomere-to-telomere completeness (look for telomeric repeats)
+
+2. **Validation Methods**:
+   - K-mer analysis: `kat comp -o kat_results -t 16 -m 21 reads.fq assembly.fasta`
+   - Read mapping: `bowtie2-build assembly.fasta; bowtie2 -x index -1 R1.fq -2 R2.fq | samtools view -Sb - > mapped.bam`
+
+3. **Chromosome Confirmation**:
+   - Look for centromeric repeats
+   - Check gene density distribution
+   - Validate synteny blocks with related species
+
+## Alternative Approach: Reference-Free Chromosome Reconstruction
+
+If you can't generate additional data (Hi-C/Bionano), try this computational approach:
+
+```bash
+# 1. Identify core eukaryotic genes
+cegma -g contigs.fasta -o cegma_out -T 16
+
+# 2. Cluster contigs by sequence composition
+sibeliaz -f contigs.fasta -o sibeliaz_out -n 16
+
+# 3. Order contigs using long reads
+ragtag.py order reference-free -u pacbio_aligned.sorted.bam -o ragtag_order
+
+# 4. Merge into chromosomes
+merge_contigs.py -i ordered_contigs.fasta -o chromosomes.fasta -c 8
+```
+
+Would you like me to:
+1. Provide specific telomere identification methods for your organism group?
+2. Explain how to estimate expected chromosome count without a reference?
+3. Detail how to perform manual chromosome curation?
+4. Suggest validation experiments to confirm chromosome structure?
