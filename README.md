@@ -21,18 +21,16 @@ multiqc fastqc_results -o multiqc_report
 # For PacBio data
 pbqc SLRM.bam LMR.bam -o pacbio_quality
 2. Hybrid Genome Assembly
-Option A: Using Unicycler (good for bacterial/small genomes)
-bash
+Option A
 unicycler -1 illumina_R1.fastq.gz -2 illumina_R2.fastq.gz \
           -l pacbio.fastq.gz -o hybrid_assembly
+
 Option B: Using SPAdes with hybrid option
-bash
+
 spades.py --pe1-1 illumina_R1.fastq.gz --pe1-2 illumina_R2.fastq.gz \
           --pacbio pacbio.fastq.gz -o spades_hybrid_assembly
 Option C: Using Flye + Polishing (for larger genomes)
-bash
-# Initial PacBio assembly
-flye --pacbio-raw pacbio.fastq.gz --out-dir flye_output --threads 16
+
 
 # Polish with Illumina
 bwa index flye_output/assembly.fasta
@@ -40,14 +38,12 @@ bwa mem flye_output/assembly.fasta illumina_R1.fastq.gz illumina_R2.fastq.gz | \
     samtools sort -o aligned.bam
 pilon --genome flye_output/assembly.fasta --frags aligned.bam --output pilon_polished
 3. Assembly Evaluation
-bash
+
 quast.py hybrid_assembly/assembly.fasta -o assembly_quality
 busco -i hybrid_assembly/assembly.fasta -l basidiomycota_odb10 -o busco_results -m genome
 4. Chromosome-level Scaffolding
-bash
-# Using Hi-C data if available
-juicer.sh -g genome_size -d juicer_output -s restriction_site hybrid_assembly/assembly.fasta
-3d-dna hybrid_assembly/assembly.fasta merged_nodups.txt
+
+
 
 # Or using RagTag with reference
 ragtag.py scaffold reference_genome.fasta hybrid_assembly/assembly.fasta -o ragtag_output
