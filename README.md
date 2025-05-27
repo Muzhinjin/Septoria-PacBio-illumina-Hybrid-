@@ -1,3 +1,8 @@
+#Extracting sequences
+/home/muzhinjin/tikafinal/ncbi-blast-2.15.0+/bin/makeblastdb -in genome.fasta -dbtype nucl -out genome_db
+/home/muzhinjin/tikafinal/ncbi-blast-2.15.0+/bin/blastn -query SeptoriaITS.fasta -db genome_db -outfmt 6 -out SeptriaITS_hits.txt
+/home/muzhinjin/tikafinal/samtools-1.19.2/samtools faidx Illuminaseptoriacontigs.fasta  NODE_259_length_7729_cov_2354.519937:3121-3611 > ITS1.fasta
+
 # Septoria-PacBio-illumina-Hybrid-
 Complete genome and comparative genomics
 
