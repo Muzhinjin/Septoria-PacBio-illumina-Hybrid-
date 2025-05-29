@@ -22,9 +22,86 @@ samtools fastq SLMR.bam > SLMR_pacbio.fastq
 # Hybrid Assembly Using Flye + Illumina Polishing
 # Use long-read assembly with Flye:
 flye --pacbio-raw SLMR_pacbio.fastq --out-dir flye_assembly --threads 16
+Output: flye_assembly/assembly.fasta
+
+# Polish Assembly with Illumina Reads
+a. Index the assembly
+bwa index flye_assembly/assembly.fasta
+
+b. Map Illumina reads
+
+bwa mem -t 16 flye_assembly/assembly.fasta SLMR_1_trimmed_paired.fq.gz SLMR_2_trimmed_paired.fq.gz | samtools sort -@ 8 -o illumina_mapped.bam
+samtools index illumina_mapped.bam
+samtools index illumina_mapped.bam
+
+c. Polish with Pilon
+pilon --genome flye_assembly/assembly.fasta --frags illumina_mapped.bam  --output polished --threads 8 --fix all
+
+Run Pilon 2–3 times to improve qualityusing output from previous round
+
+# Scaffold to Chromosome-Level Using Reference Genome
+a. Align to reference genome
+nucmer --prefix=align septoriarefgenome.fna polished.fasta
+show-coords -rcl align.delta > align.coords
+
+# Scaffold with RagTag (recommended for reference-guided scaffolding)
+b. ragtag.py scaffold septoriarefgenome.fna polished.fasta -o ragtag_output
+
+# Evaluate Final Assembly
+quast ragtag_output/ragtag.scaffold.fasta -r septoriarefgenome.fna -o quast_report
+
+# Repeat Annotation
+
+RepeatModeler -database ragtag_output/ragtag.scaffold.fasta -pa 16 -LTRStruct
+
+RepeatMasker -pa 16 -lib repeatmodeler.lib ragtag_output/ragtag.scaffold.fasta
+
+#  Clean and Rename Chromosomes
+seqkit rename ragtag_output/ragtag.scaffold.fasta > septoria_final.fasta
+
+# Mask repeats (Funannotate can do this too)
+funannotate mask -i septoria_final.fasta -o septoria_masked.fasta
+
+# Prepare genome for annotation
+funannotate clean -i septoria_final.fasta -o septoria.cleaned.fasta
+funannotate sort -i septoria.cleaned.fasta -o septoria.sorted.fasta
+
+# What to do with unaligned scaffolds?
+✅ 1. Identify unaligned scaffolds
+RagTag places these in a separate FASTA file:
+ragtag_output/ragtag.scaffold.unplaced.fasta
+
+🔎 2. Analyze unplaced scaffolds
+a. Length & GC content
+seqkit stats ragtag_output/ragtag.scaffold.unplaced.fasta
+b. BLAST search
+To determine similarity to known sequences:
+blastn -query ragtag_output/ragtag.scaffold.unplaced.fasta \
+       -db nt -outfmt 6 -max_target_seqs 1 -evalue 1e-5 -out unplaced_blast.txt
+c. BUSCO analysis
+Check if they contain core fungal genes:
+busco -i ragtag_output/ragtag.scaffold.unplaced.fasta -l fungi_odb10 -m genome -o busco_unplaced
+d. Repeat content
+RepeatMasker ragtag_output/ragtag.scaffold.unplaced.fasta
+🧩 3. Assign unplaced scaffolds to pseudochromosomes
+If you want to include unplaced scaffolds in your final assembly for annotation:
+
+Option 1: Concatenate them as "ChrUn"
+Append to your scaffolded genome:
+cat ragtag_output/ragtag.scaffold.fasta ragtag_output/ragtag.scaffold.unplaced.fasta > final_with_unplaced.fasta
+Rename unplaced scaffolds to ChrUn_1, ChrUn_2, etc., using seqkit rename.
+
+Option 2: Cluster using synteny or Hi-C (if available)
+If you have Hi-C or linkage mapping data, use tools like:
+
+SALSA, 3D-DNA, or ALLHiC to place them
+
+Or use synteny-based clustering from related species
+
+🧪 Optional: Tidy chromosomes before annotation
+Use funannotate sort to reorder and relabel contigs in a consistent fashion (e.g., Chr1, Chr2, … ChrUn1, …).
 
 
-ragtag.py patch SLMRcontigs.fasta Illuminaseptoriacontigs.fasta
 
 1. Data Quality Control
 bash
