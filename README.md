@@ -15,6 +15,15 @@ ern jobs submit --name=fastqc_multiqc --threads=4 --memory=16gb --hours=24 --mod
 #Trimmomatic
 trimmomatic PE -threads 4 -trimlog NameLog SLMR.L350_FDSW250082146-1r_1.fq.clean.gz SLMR.L350_FDSW250082146-1r_2.fq.clean.gz SLMR_1_trimmed_paired.fq.gz SLMR_1_trimmed_unpaired.fq.gz SLMR_2_trimmed_paired.fq.gz SLMR_2_trimmed_unpaired.fq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
 
+# Extract PacBio Reads
+# If PacBio reads are in a BAM file (SLMR.bam), convert to FASTQ:
+samtools fastq SLMR.bam > SLMR_pacbio.fastq
+
+# Hybrid Assembly Using Flye + Illumina Polishing
+# Use long-read assembly with Flye:
+flye --pacbio-raw SLMR_pacbio.fastq --out-dir flye_assembly --threads 16
+
+
 ragtag.py patch SLMRcontigs.fasta Illuminaseptoriacontigs.fasta
 
 1. Data Quality Control
