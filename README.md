@@ -22,6 +22,7 @@ samtools fastq SLMR.bam > SLMR_pacbio.fastq
 # Hybrid Assembly Using Flye + Illumina Polishing
 # Use long-read assembly with Flye:
 flye --pacbio-raw SLMR_pacbio.fastq --out-dir flye_assembly --threads 16
+ern jobs submit --name=Septoria --threads=8 --memory=128gb  --hours=48  --input="SLMR_pacbio.fastq" --module="flye" --command=flye -- --nano-raw SLMR_pacbio.fastq --out-dir flye_assembly --threads 16 --genome size 
 Output: flye_assembly/assembly.fasta
 
 # Polish Assembly with Illumina Reads
