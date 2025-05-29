@@ -31,12 +31,15 @@ bwa index flye_assembly/assembly.fasta
 
 b. Map Illumina reads
 
-bwa mem -t 16 flye_assembly/assembly.fasta SLMR_1_trimmed_paired.fq.gz SLMR_2_trimmed_paired.fq.gz | samtools sort -@ 8 -o illumina_mapped.bam
+ern jobs submit --name=Septoria --threads=8 --memory=128gb  --hours=48  --input="flye_assembly/assembly.fasta,SLMR_1_trimmed_paired.fq.gz,SLMR_2_trimmed_paired.fq.gz" --module="bwa" --command=bwa -- mem -t 16 flye_assembly/assembly.fasta SLMR_1_trimmed_paired.fq.gz SLMR_2_trimmed_paired.fq.gz > illumina_mapped.sam
+
 samtools index illumina_mapped.bam
-samtools index illumina_mapped.bam
+ /home/muzhinjin/tikafinal/samtools-1.19.2/samtools view -H illumina_mapped.sorted.bam view names of contigs
+ grep "^>" polished.fasta
 
 c. Polish with Pilon
 pilon --genome flye_assembly/assembly.fasta --frags illumina_mapped.bam  --output polished --threads 8 --fix all
+java -Xmx64G -jar pilon-1.24.jar --genome flye_assembly/assembly.fasta --frags illumina_mapped.sorted.bam --output polished
 
 Run Pilon 2–3 times to improve qualityusing output from previous round
 
