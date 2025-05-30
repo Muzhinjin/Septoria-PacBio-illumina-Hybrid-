@@ -51,6 +51,13 @@ show-coords -rcl align.delta > align.coords
 # Scaffold with RagTag (recommended for reference-guided scaffolding)
 b. ragtag.py scaffold septoriarefgenome.fna polished.fasta -o ragtag_output
 
+# Extract Mitochondria genome
+/home/muzhinjin/tikafinal/ncbi-blast-2.15.0+/bin/makeblastdb -in ragtag_output/ragtagscaffold1.fasta -dbtype nucl -out genome_db
+/home/muzhinjin/tikafinal/ncbi-blast-2.15.0+/bin/blastn -query MitochondriaCP099434Septorialinola.fasta -db genome_db -outfmt 6 -out mito_hits.tsv
+
+# Extract unallignedsequences
+awk '/^>/ {f=0} /^>contig_14_pilon|^>contig_21_pilon|^>contig_48_pilon|^>contig_50_pilon|^>contig_57_pilon/ {f=1} f' ragtag_output/ragtagscaffold1.fasta > uallignedcontigs.fasta
+
 # Evaluate Final Assembly
 quast ragtag_output/ragtag.scaffold.fasta -r septoriarefgenome.fna -o quast_report
 
