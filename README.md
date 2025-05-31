@@ -93,7 +93,12 @@ c. BUSCO analysis
 Check if they contain core fungal genes:
 busco -i ragtag_output/ragtag.scaffold.unplaced.fasta -l fungi_odb10 -m genome -o busco_unplaced
 d. Repeat content
-RepeatMasker ragtag_output/ragtag.scaffold.unplaced.fasta
+Repeatmasker ragtag_output/ragtag.scaffold.unplaced.fasta
+
+# Use august 
+augustus --species=aspergillus_nidulans ragtagscaffold1flteredfinalrenamed1.fasta > augustus_output.gff
+
+
 🧩 3. Assign unplaced scaffolds to pseudochromosomes
 If you want to include unplaced scaffolds in your final assembly for annotation:
 
