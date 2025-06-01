@@ -11,7 +11,6 @@ grep -c "^>" signalp_results_mature.fasta
 
 # Septoria-PacBio-illumina-Hybrid-
 Complete genome and comparative genomics
-
 #FastQC Command:  
 fastqc SLMR.L350_FDSW250082146-1r_1.fq.clean.gz SLMR.L350_FDSW250082146-1r_2.fq.clean.gz SLMR_350_1.fq.gz SLMR_350_2.fq.gz -o hastqc
 3MultiQC Command:  
