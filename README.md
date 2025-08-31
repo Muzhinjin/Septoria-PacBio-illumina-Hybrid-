@@ -43,12 +43,16 @@ ern jobs submit --name=Septoria --threads=8 --memory=128gb  --hours=48  --input=
 samtools index illumina_mapped.bam
  /home/muzhinjin/tikafinal/samtools-1.19.2/samtools view -H illumina_mapped.sorted.bam view names of contigs
  grep "^>" polished.fasta
+ awk '{print "chr -",$1,$1,"0",$2,"chr"$1}' finalscaffolds.sizes > finalkaryotype.txt
 
 c. Polish with Pilon
 pilon --genome flye_assembly/assembly.fasta --frags illumina_mapped.bam  --output polished --threads 8 --fix all
 java -Xmx64G -jar pilon-1.24.jar --genome flye_assembly/assembly.fasta --frags illumina_mapped.sorted.bam --output polished
 
 Run Pilon 2–3 times to improve qualityusing output from previous round
+
+/home/muzhinjin/tikafinal/bwa-0.7.17/bwa mem -t 16 pillon_round1.fasta SLMR_1_trimmed_paired.fq.gz SLMR_350_2.fq | samtools sort -o illumina_mapped_round2.sorted.bam
+
 
 # Scaffold to Chromosome-Level Using Reference Genome
 a. Align to reference genome
@@ -69,16 +73,32 @@ awk '/^>/ {f=0} /^>contig_14_pilon|^>contig_21_pilon|^>contig_48_pilon|^>contig_
 quast ragtag_output/ragtag.scaffold.fasta -r septoriarefgenome.fna -o quast_report
 
 # Repeat Annotation
+ RepeatMasker -pa 8 -species "aspergillus_fumigatus" sortedragtagscaffold1flteredfinalrenamed1.fasta
 
 RepeatModeler -database ragtag_output/ragtag.scaffold.fasta -pa 16 -LTRStruct
 
 RepeatMasker -pa 16 -lib repeatmodeler.lib ragtag_output/ragtag.scaffold.fasta
 
+# Determine the sizes
+faSize -detailed scaffolds_100kb.fasta > scaffolds.sizes
+
+python chrom_stats.py > chrom_stats.tsv
+# Repeat ends
+ grep -B1 -A1 -E "TTAGGG|CCCTAA" ragtagscaffold1flteredfinalrenamed1.fasta
+ ./telomere_check.py
+
 #  Clean and Rename Chromosomes
 seqkit rename ragtag_output/ragtag.scaffold.fasta > septoria_final.fasta
 
+
+# Remove less than 10000 
+seqkit seq -m 1000 ragtagscaffold1flteredfinalrenamed1.fasta > scaffolds_1kb.fasta
+
 # Mask repeats (Funannotate can do this too)
 funannotate mask -i septoria_final.fasta -o septoria_masked.fasta
+
+# Chromsme stats
+python chrom_stats.py > chrom_stats.tsv
 
 # Prepare genome for annotation
 funannotate clean -i septoria_final.fasta -o septoria.cleaned.fasta
@@ -145,6 +165,32 @@ spades.py --pe1-1 illumina_R1.fastq.gz --pe1-2 illumina_R2.fastq.gz \
           --pacbio pacbio.fastq.gz -o spades_hybrid_assembly
 Option C: Using Flye + Polishing (for larger genomes)
 
+Prep: convert BAM → FASTQ (only if you don’t really have SLMR_pacbio.fastq)
+# only run if SLMR_pacbio.fastq does not already exist
+samtools fastq -@ 16 SLMR.bam > SLMR_pacbio.fastq
+
+#  map long reads to contigs
+minimap2 -x map-pb -t 16 Illuminaseptoriacontigs.fasta SLMR_pacbio.fastq > long_vs_contigs.paf
+
+# round 1 racon
+# Install racon using conda
+conda create -n racon_env -c bioconda racon
+conda activate racon_env
+
+racon -t 16 SLMR_pacbio.fastq long_vs_contigs.paf Illuminaseptoriacontigs.fasta > contigs.racon1.fasta
+#  round 2 racon
+minimap2 -x map-pb -t 16 contigs.racon1.fasta SLMR_pacbio.fastq > 2long_vs_contigs.paf
+racon -t 16 SLMR_pacbio.fastq 2long_vs_contigs.paf contigs.racon1.fasta > contigs.racon2.fast
+
+#  correct misassemblies relative to reference
+ragtag.py correct -t 16 septoriarefgenome.fna contigs.racon2.fasta -o ragtag_correct
+
+# 2scaffold corrected assembly to reference chromosomes
+ragtag.py scaffold -t 16 septoriarefgenome.fna ragtag_correct/ragtag.correct.fasta -o ragtag_scaffold
+# outputs:
+# ragtag_scaffold/ragtag.scaffold.fasta  -> main scaffolded assembly
+# ragtag_scaffold/ragtag.scaffold.agp
+# ragtag_scaffold/ (logs)
 
 # Polish with Illumina
 bwa index flye_output/assembly.fasta
