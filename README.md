@@ -62,6 +62,14 @@ show-coords -rcl align.delta > align.coords
 # Scaffold with RagTag (recommended for reference-guided scaffolding)
 b. ragtag.py scaffold septoriarefgenome.fna polished.fasta -o ragtag_output
 
+/home/muzhinjin/tikafinal/bwa-0.7.17/bwa index pilon_polished.fasta
+ /home/muzhinjin/tikafinal/bwa-0.7.17/bwa bwa mem -t 16 pilon_polished.fasta SLMR.L350_FDSW250082146-1r_1clean.fq reads_R2.fastq.gz > pilonround2.sam
+  /home/muzhinjin/tikafinal/bwa-0.7.17/bwa mem -t 16 pilon_polished.fasta SLMR.L350_FDSW250082146-1r_1clean.fq reads_R2.fastq.gz > pilonround2.sam
+  /home/muzhinjin/tikafinal/samtools-1.19.2/samtools view -bS pilonround2.sam > pilonround2.bam
+  /home/muzhinjin/tikafinal/samtools-1.19.2/samtools sort -@ 16 -o pilonround2.sorted.bam pilonround2.bam 
+  /home/muzhinjin/tikafinal/samtools-1.19.2/samtools index pilonround2.sorted.bam
+  java -Xmx64G -jar pilon-1.24.jar --genome pilon_polished.fasta --frags pilonround2.sorted.bam   --output pilonround2_polished --threads 16
+
 # Extract Mitochondria genome
 /home/muzhinjin/tikafinal/ncbi-blast-2.15.0+/bin/makeblastdb -in ragtag_output/ragtagscaffold1.fasta -dbtype nucl -out genome_db
 /home/muzhinjin/tikafinal/ncbi-blast-2.15.0+/bin/blastn -query MitochondriaCP099434Septorialinola.fasta -db genome_db -outfmt 6 -out mito_hits.tsv
@@ -81,6 +89,8 @@ RepeatMasker -pa 16 -lib repeatmodeler.lib ragtag_output/ragtag.scaffold.fasta
 
 # Determine the sizes
 faSize -detailed scaffolds_100kb.fasta > scaffolds.sizes
+cat polished2scaffolds.sizes
+
 
 python chrom_stats.py > chrom_stats.tsv
 # Repeat ends
