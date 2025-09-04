@@ -72,6 +72,7 @@ b. ragtag.py scaffold septoriarefgenome.fna polished.fasta -o ragtag_output
 
 # Extract unallignedsequences
 awk '/^>/ {f=0} /^>contig_14_pilon|^>contig_21_pilon|^>contig_48_pilon|^>contig_50_pilon|^>contig_57_pilon/ {f=1} f' ragtag_output/ragtagscaffold1.fasta > uallignedcontigs.fasta
+awk '/^>/{f=($0 ~ /CP099434.1_RagTag_pilon_pilon/)} f' pilonround2_polished.fasta > CP099434mitochonria.fasta
 
 # Evaluate Final Assembly
 quast ragtag_output/ragtag.scaffold.fasta -r septoriarefgenome.fna -o quast_report
