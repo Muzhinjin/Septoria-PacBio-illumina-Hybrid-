@@ -1,10 +1,7 @@
-#Determine number of Sequences 
+# Determine number of Sequences 
 grep -c "^>" signalp_results_mature.fasta
 
-
-
-
-#Extracting sequences
+# Extracting sequences
 /home/muzhinjin/tikafinal/ncbi-blast-2.15.0+/bin/makeblastdb -in genome.fasta -dbtype nucl -out genome_db
 /home/muzhinjin/tikafinal/ncbi-blast-2.15.0+/bin/blastn -query SeptoriaITS.fasta -db genome_db -outfmt 6 -out SeptriaITS_hits.txt
 /home/muzhinjin/tikafinal/samtools-1.19.2/samtools faidx Illuminaseptoriacontigs.fasta  NODE_259_length_7729_cov_2354.519937:3121-3611 > ITS1.fasta
@@ -13,11 +10,10 @@ awk '/^>/ {print; next} {seq=$0; rev=""; for(i=length(seq);i!=0;i--) { base=subs
 
 # Septoria-PacBio-illumina-Hybrid-
 Complete genome and comparative genomics
-#FastQC Command:  
+# FastQC Command:  
 fastqc SLMR.L350_FDSW250082146-1r_1.fq.clean.gz SLMR.L350_FDSW250082146-1r_2.fq.clean.gz SLMR_350_1.fq.gz SLMR_350_2.fq.gz -o hastqc
 3MultiQC Command:  
 multiqc hastqc/ -o hastqc/
-
 ern jobs submit --name=fastqc_multiqc --threads=4 --memory=16gb --hours=24 --module='fastqc multiqc' --command="fastqc SLMR.L350_FDSW250082146-1r_1.fq.clean.gz SLMR.L350_FDSW250082146-1r_2.fq.clean.gz SLMR_350_1.fq.gz SLMR_350_2.fq.gz -o hastqc/ && multiqc hastqc/ -o hastqc/"
 #Trimmomatic
 trimmomatic PE -threads 4 -trimlog NameLog SLMR.L350_FDSW250082146-1r_1.fq.clean.gz SLMR.L350_FDSW250082146-1r_2.fq.clean.gz SLMR_1_trimmed_paired.fq.gz SLMR_1_trimmed_unpaired.fq.gz SLMR_2_trimmed_paired.fq.gz SLMR_2_trimmed_unpaired.fq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
@@ -90,8 +86,6 @@ RepeatMasker -pa 16 -lib repeatmodeler.lib ragtag_output/ragtag.scaffold.fasta
 # Determine the sizes
 faSize -detailed scaffolds_100kb.fasta > scaffolds.sizes
 cat polished2scaffolds.sizes
-
-
 python chrom_stats.py > chrom_stats.tsv
 # Repeat ends
  grep -B1 -A1 -E "TTAGGG|CCCTAA" ragtagscaffold1flteredfinalrenamed1.fasta
@@ -99,7 +93,6 @@ python chrom_stats.py > chrom_stats.tsv
 
 #  Clean and Rename Chromosomes
 seqkit rename ragtag_output/ragtag.scaffold.fasta > septoria_final.fasta
-
 
 # Remove less than 10000 
 seqkit seq -m 1000 ragtagscaffold1flteredfinalrenamed1.fasta > scaffolds_1kb.fasta
@@ -114,50 +107,36 @@ python chrom_stats.py > chrom_stats.tsv
 funannotate clean -i septoria_final.fasta -o septoria.cleaned.fasta
 funannotate sort -i septoria.cleaned.fasta -o septoria.sorted.fasta
 
-# What to do with unaligned scaffolds?
-✅ 1. Identify unaligned scaffolds
-RagTag places these in a separate FASTA file:
-ragtag_output/ragtag.scaffold.unplaced.fasta
-
-🔎 2. Analyze unplaced scaffolds
-a. Length & GC content
+# Length & GC content
 seqkit stats ragtag_output/ragtag.scaffold.unplaced.fasta
-b. BLAST search
+
+# BLAST search
 To determine similarity to known sequences:
 blastn -query ragtag_output/ragtag.scaffold.unplaced.fasta \
        -db nt -outfmt 6 -max_target_seqs 1 -evalue 1e-5 -out unplaced_blast.txt
-c. BUSCO analysis
+# BUSCO analysis
 Check if they contain core fungal genes:
 busco -i ragtag_output/ragtag.scaffold.unplaced.fasta -l fungi_odb10 -m genome -o busco_unplaced
-d. Repeat content
+# Repeat content
 Repeatmasker ragtag_output/ragtag.scaffold.unplaced.fasta
 
 # Use august 
 augustus --species=aspergillus_nidulans ragtagscaffold1flteredfinalrenamed1.fasta > augustus_output.gff
+# Assign unplaced scaffolds to pseudochromosomes
+include unplaced scaffolds in your final assembly for annotation:
 
-
-🧩 3. Assign unplaced scaffolds to pseudochromosomes
-If you want to include unplaced scaffolds in your final assembly for annotation:
-
-Option 1: Concatenate them as "ChrUn"
+# Concatenate them as "ChrUn"
 Append to your scaffolded genome:
 cat ragtag_output/ragtag.scaffold.fasta ragtag_output/ragtag.scaffold.unplaced.fasta > final_with_unplaced.fasta
 Rename unplaced scaffolds to ChrUn_1, ChrUn_2, etc., using seqkit rename.
 
-Option 2: Cluster using synteny or Hi-C (if available)
-If you have Hi-C or linkage mapping data, use tools like:
-
-SALSA, 3D-DNA, or ALLHiC to place them
-
-Or use synteny-based clustering from related species
-
-🧪 Optional: Tidy chromosomes before annotation
+# Tidy chromosomes before annotation
 Use funannotate sort to reorder and relabel contigs in a consistent fashion (e.g., Chr1, Chr2, … ChrUn1, …).
 
 
 
 1. Data Quality Control
-bash
+
 # For Illumina data
 fastqc illumina_*.fastq.gz -o fastqc_results
 multiqc fastqc_results -o multiqc_report
@@ -259,12 +238,6 @@ jbrowse create -i ragtag_output/ragtag.scaffolds.fasta \
 # Add additional tracks
 jbrowse add-track effector_results/effectors.gff --load copy
 jbrowse add-track dbcan_results/overview.gff --load copy
-
-
-
-
-
-
 
 Effector prediction
 wget https://services.healthtech.dtu.dk/download/9782ed7b-1e4f-4227-9a28-b9abb9a0684e/signalp-5.0b.Linux.tar.gz
@@ -443,10 +416,5 @@ ragtag.py order reference-free -u pacbio_aligned.sorted.bam -o ragtag_order
 
 # 4. Merge into chromosomes
 merge_contigs.py -i ordered_contigs.fasta -o chromosomes.fasta -c 8
-```
 
-Would you like me to:
-1. Provide specific telomere identification methods for your organism group?
-2. Explain how to estimate expected chromosome count without a reference?
-3. Detail how to perform manual chromosome curation?
-4. Suggest validation experiments to confirm chromosome structure?
+
