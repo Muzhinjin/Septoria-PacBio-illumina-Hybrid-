@@ -1,3 +1,21 @@
+Module load cluster/hpc
+
+
+minimap2 -ax map-pb -t 8 pilonround2_polished.fasta SLMR_pacbio.fasta > polishedalr.sam
+/home/muzhinjin/tikafinal/samtools-1.19.2/samtools view -@ 8 -bS polishedalr.sam > polishedlr_unsorted.bam
+ /home/muzhinjin/tikafinal/samtools-1.19.2/samtools sort -@ 8 -o polishedlr_sorted.bam > polishedlr_unsorted.bam
+  /home/muzhinjin/tikafinal/samtools-1.19.2/samtools index polishedlr_unsorted.bam
+  /home/muzhinjin/tikafinal/samtools-1.19.2/samtools sort -@ 8 -o polishedlr_sorted.bam > polishedlr_unsorted.bam
+  /home/muzhinjin/tikafinal/samtools-1.19.2/samtools view -@ 8 -bS polishedalr.sam > polishedlr_unsorted.bam
+  /home/muzhinjin/tikafinal/samtools-1.19.2/samtools sort -@ 8 -o polishedlr.bam polishedlr_unsorted.bam
+  /home/muzhinjin/tikafinal/samtools-1.19.2/samtools index polishedlr.bam
+  /home/muzhinjin/tikafinal/samtools-1.19.2/samtools idxstats polishedlr.bam > polisheddepth.tsv
+  cat polisheddepth.tsv
+
+
+
+
+
 # Determine number of Sequences 
 grep -c "^>" signalp_results_mature.fasta
 
