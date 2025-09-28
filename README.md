@@ -1,3 +1,5 @@
+faSize -detailed Septorialinicola.fna  > septorialinolica.tsv
+
 Module load cluster/hpc
 
 
