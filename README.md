@@ -1,4 +1,11 @@
 faSize -detailed Septorialinicola.fna  > septorialinolica.tsv
+ grep '>' ragtag.patch.fasta
+ java -Xmx64G -jar pilon-1.24.jar --genome assembly_pilon1_round1.fasta  --frags illumina_paired_round2.bam --output assembly_pilon2 --threads 32
+  /home/muzhinjin/tikafinal/bwa-0.7.17/bwa index illumina_paired_round2.bam
+  /home/muzhinjin/tikafinal/samtools-1.19.2/samtools sort -@ 8 -o illumina_paired_round2.bam illumina_paired_round2.sam
+  quast.py ragtag_output/ragtag.scaffold.fasta -r septoriarefgenome.fna -o quast_results
+
+
 
 Module load cluster/hpc
 
@@ -47,6 +54,8 @@ samtools fastq SLMR.bam > SLMR_pacbio.fastq
 flye --pacbio-raw SLMR_pacbio.fastq --out-dir flye_assembly --threads 16
 ern jobs submit --name=Septoria --threads=8 --memory=128gb  --hours=48  --input="SLMR_pacbio.fastq" --module="flye" --command=flye -- --nano-raw SLMR_pacbio.fastq --out-dir flye_assembly --threads 16 --genome size 
 Output: flye_assembly/assembly.fasta
+ern jobs submit --name=Septoriabusco --threads=32 --memory=128gb  --hours=48  --input="Finalassemplyragtag.scaffold.fasta" --module="busco/1.0_88de6b8" --command=busco -- Finalassemplyragtag.scaffold.fasta -l dothideomycetes_odb10 -m genome -o busco_out -c 32
+
 
 # Polish Assembly with Illumina Reads
 a. Index the assembly
