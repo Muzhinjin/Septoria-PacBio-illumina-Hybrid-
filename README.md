@@ -4,7 +4,12 @@ faSize -detailed Septorialinicola.fna  > septorialinolica.tsv
   /home/muzhinjin/tikafinal/bwa-0.7.17/bwa index illumina_paired_round2.bam
   /home/muzhinjin/tikafinal/samtools-1.19.2/samtools sort -@ 8 -o illumina_paired_round2.bam illumina_paired_round2.sam
   quast.py ragtag_output/ragtag.scaffold.fasta -r septoriarefgenome.fna -o quast_results
+  ern jobs submit --name=Septoriabusco --threads=32 --memory=128gb  --hours=48  --input="Septoriagenomeassempledfinal_sorted.fasta" --module="busco/1.0_88de6b8" --command=busco -- -i Septoriagenomeassempledfinal_sorted.fasta  -l dothideomycetes_odb10 -m genome -o busco_out -c 32
 
+#Extractthe top 4 contigs
+seqkit sort -l Finalassemplyragtag.scaffold.fasta | head -n 4 > top_contigs.fasta
+#SYN
+ern jobs submit --name=Septorisyny --threads=32 --memory=128gb  --hours=48  --input="*.gbff" --module="syny/1.0_1294505" --command=run_syny.pl -- -a *.gbff -o finaloutput directory
 
 
 Module load cluster/hpc
