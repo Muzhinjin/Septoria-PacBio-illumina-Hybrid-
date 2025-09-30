@@ -13,6 +13,8 @@ ern jobs submit --name=Septorisyny --threads=32 --memory=128gb  --hours=48  --in
 
 
 Module load cluster/hpc
+augustus --species=botrytis_cinerea --protein=on --gff3=on --stopCodonExcludedFromCDS=false combinedallclassfiedsorted2ffinnaotatecleaned.fasta > augustus_septoria.gff3
+/home/muzhinjin/miniconda3/envs/genome_assembly/bin/getAnnoFasta.pl SLM2augustus_septoria.gff3
 
 
 minimap2 -ax map-pb -t 8 pilonround2_polished.fasta SLMR_pacbio.fasta > polishedalr.sam
