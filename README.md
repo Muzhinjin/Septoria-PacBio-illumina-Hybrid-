@@ -7,7 +7,8 @@ faSize -detailed Septorialinicola.fna  > septorialinolica.tsv
   ern jobs submit --name=Septoriabusco --threads=32 --memory=128gb  --hours=48  --input="Septoriagenomeassempledfinal_sorted.fasta" --module="busco/1.0_88de6b8" --command=busco -- -i Septoriagenomeassempledfinal_sorted.fasta  -l dothideomycetes_odb10 -m genome -o busco_out -c 32
   /home/muzhinjin/miniconda3/envs/genome_assembly/bin/getAnnoFasta.pl Septoriliniclaaugustus_septoria.gff3
 
-
+#Effectors
+python /home/muzhinjin/Septoria/septriagenomes/EffectorP/Scripts/EffectorP.py -i SLML2signalp_only.fa -o effectorp_results.txt
 #Extractthe top 4 contigs
 seqkit sort -l Finalassemplyragtag.scaffold.fasta | head -n 4 > top_contigs.fasta
 #SYN
