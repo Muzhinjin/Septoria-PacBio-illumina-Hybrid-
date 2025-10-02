@@ -5,10 +5,14 @@ faSize -detailed Septorialinicola.fna  > septorialinolica.tsv
   /home/muzhinjin/tikafinal/samtools-1.19.2/samtools sort -@ 8 -o illumina_paired_round2.bam illumina_paired_round2.sam
   quast.py ragtag_output/ragtag.scaffold.fasta -r septoriarefgenome.fna -o quast_results
   ern jobs submit --name=Septoriabusco --threads=32 --memory=128gb  --hours=48  --input="Septoriagenomeassempledfinal_sorted.fasta" --module="busco/1.0_88de6b8" --command=busco -- -i Septoriagenomeassempledfinal_sorted.fasta  -l dothideomycetes_odb10 -m genome -o busco_out -c 32
-  /home/muzhinjin/miniconda3/envs/genome_assembly/bin/getAnnoFasta.pl Septoriliniclaaugustus_septoria.gff3
-
-#Effectors
+  
+# Effectors
 python /home/muzhinjin/Septoria/septriagenomes/EffectorP/Scripts/EffectorP.py -i SLML2signalp_only.fa -o effectorp_results.txt
+# extract the IDs predicted as effectors using awk or Python. For example:
+awk '$2=="Effector" {print $1}' Septorialincolaeffectorp_results.txt > effector_ids.txt
+# Extract sequences from your FASTA
+seqkit grep -f effector_ids.txt Septorialincolasignalp_only.fasta > Septorialincola_effectors.fa
+
 #Extractthe top 4 contigs
 seqkit sort -l Finalassemplyragtag.scaffold.fasta | head -n 4 > top_contigs.fasta
 #SYN
@@ -33,10 +37,18 @@ minimap2 -ax map-pb -t 8 pilonround2_polished.fasta SLMR_pacbio.fasta > polished
 #Rename
 sed -i 's/Chr\([0-9]\+\)/Chr0\1/g' combinedallclassfiedsorted2f.fasta.gbff
 
- #SignalP
+ # SignalP
+ /home/muzhinjin/miniconda3/envs/genome_assembly/bin/getAnnoFasta.pl Septoriliniclaaugustus_septoria.gff3
 signalp -fasta Septoriaglycinesaugustus_septoria3.aa -format short -org euk -prefix Septoriaglycine_signalp
 awk '$2 ~ /^SP/ {print $1}' Septoriaglycine_signalp_summary.signalp5 > Septoriaglycinessp_ids.txt
 seqkit grep -f Septoriaglycinessp_ids.txt Septoriaglycinesaugustus_septoria3.aa > Septoriaglycinesignalp_only.fa
+
+# Effectors
+python /home/muzhinjin/Septoria/septriagenomes/EffectorP/Scripts/EffectorP.py -i SLML2signalp_only.fa -o effectorp_results.txt
+# extract the IDs predicted as effectors using awk or Python. For example:
+awk '$2=="Effector" {print $1}' Septorialincolaeffectorp_results.txt > effector_ids.txt
+# Extract sequences from your FASTA
+seqkit grep -f effector_ids.txt Septorialincolasignalp_only.fasta > Septorialincola_effectors.fa
 
 seqkit stats Septoriaglycinesignalp_only.fa
 # Determine number of Sequences 
@@ -149,10 +161,14 @@ python chrom_stats.py > chrom_stats.tsv
 
 # Prepare genome for annotation
 funannotate clean -i septoria_final.fasta -o septoria.cleaned.fasta
+ern jobs submit --name=Septoriafunantatecleanglycine --threads=32 --memory=128gb  --hours=48  --input="Septoriaglycines.fna" --module="funannotate/1.0_1e48052" --command=funannotate -- clean i Septoriaglycines.fna -o funnantatecleanSeptoriaglycines.fasta
 funannotate sort -i septoria.cleaned.fasta -o septoria.sorted.fasta
 
 # Length & GC content
 seqkit stats ragtag_output/ragtag.scaffold.unplaced.fasta
+
+# Antismash
+ern jobs submit --name=ProkkaSeptoriaglycine --threads=32 --memory=128gb  --hours=48  --input="Septoriaglycines.fna" --module="prokka/1.0_d8de48f" --command=prokka -- Septoriaglycines.fna --outdir prokka_out --prefix mygenome
 
 # BLAST search
 To determine similarity to known sequences:
