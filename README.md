@@ -11,8 +11,10 @@ python /home/muzhinjin/Septoria/septriagenomes/EffectorP/Scripts/EffectorP.py -i
 python EffectorP.py -i /home/muzhinjin/Septoria/SgnalP/Septoriaglycinesignalp_only.fa -o effectorp_results.txt
 # extract the IDs predicted as effectors using awk or Python. For example:
 awk '$2=="Effector" {print $1}' Septorialincolaeffectorp_results.txt > effector_ids.txt
+grep -E "Apoplastic|Cytoplasmic" Slinicola_results.txt | awk '{print $1}' > Slinolaeeffector_IDs.txt
 # Extract sequences from your FASTA
 seqkit grep -f effector_ids.txt Septorialincolasignalp_only.fasta > Septorialincola_effectors.fa
+seqkit grep -f  Slinolaeeffector_IDs.txt /home/muzhinjin/Septoria/SgnalP/Septorialincolasignalp_only.fasta > Slinicolaeffectorp_only.fasta
 
 #Extractthe top 4 contigs
 seqkit sort -l Finalassemplyragtag.scaffold.fasta | head -n 4 > top_contigs.fasta
