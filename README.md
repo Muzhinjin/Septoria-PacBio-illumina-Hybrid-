@@ -8,6 +8,7 @@ faSize -detailed Septorialinicola.fna  > septorialinolica.tsv
   
 # Effectors
 python /home/muzhinjin/Septoria/septriagenomes/EffectorP/Scripts/EffectorP.py -i SLML2signalp_only.fa -o effectorp_results.txt
+python EffectorP.py -i /home/muzhinjin/Septoria/SgnalP/Septoriaglycinesignalp_only.fa -o effectorp_results.txt
 # extract the IDs predicted as effectors using awk or Python. For example:
 awk '$2=="Effector" {print $1}' Septorialincolaeffectorp_results.txt > effector_ids.txt
 # Extract sequences from your FASTA
@@ -47,8 +48,10 @@ seqkit grep -f Septoriaglycinessp_ids.txt Septoriaglycinesaugustus_septoria3.aa 
 python /home/muzhinjin/Septoria/septriagenomes/EffectorP/Scripts/EffectorP.py -i SLML2signalp_only.fa -o effectorp_results.txt
 # extract the IDs predicted as effectors using awk or Python. For example:
 awk '$2=="Effector" {print $1}' Septorialincolaeffectorp_results.txt > effector_ids.txt
+grep -E "Apoplastic|Cytoplasmic" effectorp_results.txt | awk '{print $1}' > Septoriaglycineeeffector_IDs.txt
 # Extract sequences from your FASTA
 seqkit grep -f effector_ids.txt Septorialincolasignalp_only.fasta > Septorialincola_effectors.fa
+seqkit grep -f Septoriaglycineeeffector_IDs.txt /home/muzhinjin/Septoria/SgnalP/Septoriaglycinesignalp_only.fa > Septoriaglycineeffectorp_only.fasta
 
 seqkit stats Septoriaglycinesignalp_only.fa
 # Determine number of Sequences 
