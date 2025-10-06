@@ -1,3 +1,7 @@
+# Loking for a file 
+find / -name "getAnnoFasta.pl" 2>/dev/null
+
+
 faSize -detailed Septorialinicola.fna  > septorialinolica.tsv
  grep '>' ragtag.patch.fasta
  java -Xmx64G -jar pilon-1.24.jar --genome assembly_pilon1_round1.fasta  --frags illumina_paired_round2.bam --output assembly_pilon2 --threads 32
@@ -16,14 +20,16 @@ grep -E "Apoplastic|Cytoplasmic" Slinicola_results.txt | awk '{print $1}' > Slin
 seqkit grep -f effector_ids.txt Septorialincolasignalp_only.fasta > Septorialincola_effectors.fa
 seqkit grep -f  Slinolaeeffector_IDs.txt /home/muzhinjin/Septoria/SgnalP/Septorialincolasignalp_only.fasta > Slinicolaeffectorp_only.fasta
 
-#Extractthe top 4 contigs
+# Extractthe top 4 contigs
 seqkit sort -l Finalassemplyragtag.scaffold.fasta | head -n 4 > top_contigs.fasta
-#SYN
+# SYN
 ern jobs submit --name=Septorisyny --threads=32 --memory=128gb  --hours=48  --input="*.gbff" --module="syny/1.0_1294505" --command=run_syny.pl -- -a *.gbff -o finaloutput directory
 
 
 Module load cluster/hpc
 augustus --species=botrytis_cinerea --protein=on --gff3=on --stopCodonExcludedFromCDS=false combinedallclassfiedsorted2ffinnaotatecleaned.fasta > augustus_septoria.gff3
+# Mantain the names
+augustus --species=botrytis_cinerea --protein=on --gff3=on --stopCodonExcludedFromCDS=false --uniqueGeneId=true combinedallclassfiedsorted2ffinnaotatecleaned.fasta > augustus_septoria.gff3
 /home/muzhinjin/miniconda3/envs/genome_assembly/bin/getAnnoFasta.pl SLM2augustus_septoria.gff3
 
 
@@ -40,6 +46,11 @@ minimap2 -ax map-pb -t 8 pilonround2_polished.fasta SLMR_pacbio.fasta > polished
 #Rename
 sed -i 's/Chr\([0-9]\+\)/Chr0\1/g' combinedallclassfiedsorted2f.fasta.gbff
 
+# Augustus
+# make sure they are the same name 
+awk 'BEGIN{FS=OFS="\t"} !/^#/{$1=prevseq} /^>/ {sub(/^>/,"",$1); prevseq=$1; next} 1' input.fasta augustus_output.gff > restored_names.gff
+
+
  # SignalP
  /home/muzhinjin/miniconda3/envs/genome_assembly/bin/getAnnoFasta.pl Septoriliniclaaugustus_septoria.gff3
 signalp -fasta Septoriaglycinesaugustus_septoria3.aa -format short -org euk -prefix Septoriaglycine_signalp
@@ -48,6 +59,11 @@ seqkit grep -f Septoriaglycinessp_ids.txt Septoriaglycinesaugustus_septoria3.aa 
 
 # Effectors
 python /home/muzhinjin/Septoria/septriagenomes/EffectorP/Scripts/EffectorP.py -i SLML2signalp_only.fa -o effectorp_results.txt
+ 
+ git clone https://github.com/JanaSperschneider/EffectorP-3.0.git
+ cd EffectorP-3.0
+ unzip weka-3-8-4.zip
+ python EffectorP.py -i /home/muzhinjin/Septoria/SgnalP/SL2signalp_only.fa -o SL2effectorp_results.txt
 # extract the IDs predicted as effectors using awk or Python. For example:
 awk '$2=="Effector" {print $1}' Septorialincolaeffectorp_results.txt > effector_ids.txt
 grep -E "Apoplastic|Cytoplasmic" effectorp_results.txt | awk '{print $1}' > Septoriaglycineeeffector_IDs.txt
@@ -87,6 +103,9 @@ ern jobs submit --name=Septoria --threads=8 --memory=128gb  --hours=48  --input=
 Output: flye_assembly/assembly.fasta
 ern jobs submit --name=Septoriabusco --threads=32 --memory=128gb  --hours=48  --input="Finalassemplyragtag.scaffold.fasta" --module="busco/1.0_88de6b8" --command=busco -- Finalassemplyragtag.scaffold.fasta -l dothideomycetes_odb10 -m genome -o busco_out -c 32
 
+# TEs
+conda install -c bioconda trnascan-se
+tRNAscan-SE -o trnas.out -f trnas_struct.out $FASTA
 
 # Polish Assembly with Illumina Reads
 a. Index the assembly
