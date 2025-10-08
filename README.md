@@ -1,6 +1,22 @@
 # Loking for a file 
 find / -name "getAnnoFasta.pl" 2>/dev/null
-3
+#Extract effectors frm Blast heat file
+ awk -F'\t' '
+NR==1 { print; next }
+{
+    if ($1 != prev) {
+        if (NR > 2) print line
+        line = $0
+        prev = $1
+        best = $3
+    } else if ($3 > best) {
+        line = $0
+        best = $3
+    }
+}
+END { print line }
+' SlinoclaeffectrorsnoTHMM.tabular > best_hits.tabular
+
 
 
 faSize -detailed Septorialinicola.fna  > septorialinolica.tsv
