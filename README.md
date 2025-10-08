@@ -1,5 +1,6 @@
 # Loking for a file 
 find / -name "getAnnoFasta.pl" 2>/dev/null
+3
 
 
 faSize -detailed Septorialinicola.fna  > septorialinolica.tsv
@@ -47,6 +48,9 @@ minimap2 -ax map-pb -t 8 pilonround2_polished.fasta SLMR_pacbio.fasta > polished
 sed -i 's/Chr\([0-9]\+\)/Chr0\1/g' combinedallclassfiedsorted2f.fasta.gbff
 
 # Augustus
+# Extraxct prtein sequences
+
+/home/muzhinjin/miniconda3/envs/genome_assembly/bin/getAnnoFasta.pl SL2augustus_septoria.gff
 # make sure they are the same name 
 awk 'BEGIN{FS=OFS="\t"} !/^#/{$1=prevseq} /^>/ {sub(/^>/,"",$1); prevseq=$1; next} 1' input.fasta augustus_output.gff > restored_names.gff
 
