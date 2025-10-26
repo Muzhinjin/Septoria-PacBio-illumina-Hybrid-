@@ -17,7 +17,7 @@ NR==1 { print; next }
 END { print line }
 ' SlinoclaeffectrorsnoTHMM.tabular > best_hits.tabular
 
-
+ pyani-plus list-runs --database Neo.db
 
 faSize -detailed Septorialinicola.fna  > septorialinolica.tsv
  grep '>' ragtag.patch.fasta
@@ -523,5 +523,5 @@ merge_contigs.py -i ordered_contigs.fasta -o chromosomes.fasta -c 8
 
 pyani-plus anim files/ --database Septoria.db --create-db --name "Septria_ANIm"
 pyani-plus list-runs --database Septoria.db
- pyani-plus export-run --database Septoria.db --outdir walkthrough_output/ --run-id 1
-pyani-plus plot-run --database Septoria.db --outdir walkthrough_output/ --run-id 1
+ pyani-plus export-run --database Neo.db --outdir walkthrough_output/ --run-id 1
+pyani-plus plot-run --database Neo.db --outdir walkthrough_output/ --run-id 1
