@@ -36,6 +36,8 @@ grep -E "Apoplastic|Cytoplasmic" Slinicola_results.txt | awk '{print $1}' > Slin
 # Extract sequences from your FASTA
 seqkit grep -f effector_ids.txt Septorialincolasignalp_only.fasta > Septorialincola_effectors.fa
 seqkit grep -f  Slinolaeeffector_IDs.txt /home/muzhinjin/Septoria/SgnalP/Septorialincolasignalp_only.fasta > Slinicolaeffectorp_only.fasta
+seqkit seq -m 1 -M 300 -g Neopestalotiopsis_rosae_1902predictedeffectors.fasta -o Neopestalotiopsis_rosae_1902predictedeffectors_under300.fa
+
 
 # Extractthe top 4 contigs
 seqkit sort -l Finalassemplyragtag.scaffold.fasta | head -n 4 > top_contigs.fasta
