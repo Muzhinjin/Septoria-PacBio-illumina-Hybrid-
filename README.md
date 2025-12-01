@@ -69,8 +69,50 @@ sed -i 's/Chr\([0-9]\+\)/Chr0\1/g' combinedallclassfiedsorted2f.fasta.gbff
 # Extraxct prtein sequences
 
 /home/muzhinjin/miniconda3/envs/genome_assembly/bin/getAnnoFasta.pl SL2augustus_septoria.gff
+
+wget https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz
+gunzip uniprot_sprot.fasta.gz
+
 # make sure they are the same name 
 awk 'BEGIN{FS=OFS="\t"} !/^#/{$1=prevseq} /^>/ {sub(/^>/,"",$1); prevseq=$1; next} 1' input.fasta augustus_output.gff > restored_names.gff
+ern jobs submit \
+  --name=effectorblastp \
+  --threads=32 \
+  --memory=128gb \
+  --hours=48 \
+  --input="*.fasta" \
+  --module="blast/3.0_6bf5a81" \
+  --command="blastp -query ${input} -db swissprot_db -out ${input}_vs_swissprot.tsv -evalue 1e-5 -outfmt 6 -num_threads 32"
+
+  ern jobs submit \
+  --name=effectororthofinder \
+  --threads=32 \
+  --memory=128gb \
+  --hours=48 \
+  --input="effectorsforcomprative/*" \
+  --module="orthofinder/1.1_76a008b" \
+  --command="orthofinder -f effectorsforcomprative/"
+JAVA_TOOL_OPTIONS= python EffectorP_3.0.0-beta/EffectorP.py \
+    -i NC100filtered_sequences_under300.fa \
+    -o 100cintings.tsv \
+    -E 100predictedeffectors.fasta \
+    -N 100nonpredictedeffectors.fasta
+python /home/muzhinjin/.../EffectorP_3.0.0-beta/EffectorP.py \
+  -i 100predictedeffectors.fasta
+
+  python /home/muzhinjin/Septoria/septriagenomes/EffectorP/Scripts/EffectorP.py -i 100predictedeffectors.fasta
+
+  blastp -query Neopestalotiopsis_rosae_1902.fasta -db swissprot -out effector_blast.tsv -evalue 1e-5 -outfmt 6
+
+  # SwissProt
+blastp -query Neopestalotiopsis_rosae_1902.fasta -db swissprot \
+  -out results/blast/blast_swissprot.tsv \
+  -evalue 1e-5 -outfmt 6 -num_threads 8
+
+# Optional: PHI-base
+blastp -query Neopestalotiopsis_rosae_1902.fasta -db phi-base.fasta \
+  -out results/blast/blast_phi.tsv \
+  -evalue 1e-5 -outfmt 6 -num_threads 8
 
 
  # SignalP
