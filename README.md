@@ -146,6 +146,13 @@ grep -c "^>" signalp_results_mature.fasta
 cat 
 awk '/^>/ {print; next} {seq=$0; rev=""; for(i=length(seq);i!=0;i--) { base=substr(seq,i,1); comp=toupper(base); if(comp=="A") comp="T"; else if(comp=="T") comp="A"; else if(comp=="C") comp="G"; else if(comp=="G") comp="C"; rev=rev comp } print rev }' sepextractedtelf.fasta > sepextractedtelfrc.fasta
 
+
+
+# Functional characterisation of effectors
+/home/muzhinjin/tikafinal/ncbi-blast-2.15.0+/bin/makeblastdb -in uniprot_sprot.fasta -dbtype prot -out swissprot_db
+
+
+
 # Septoria-PacBio-illumina-Hybrid-
 Complete genome and comparative genomics
 # FastQC Command:  
