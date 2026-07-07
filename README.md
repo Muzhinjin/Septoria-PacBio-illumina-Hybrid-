@@ -576,3 +576,9 @@ pyani-plus anim files/ --database Septoria.db --create-db --name "Septria_ANIm"
 pyani-plus list-runs --database Septoria.db
  pyani-plus export-run --database Neo.db --outdir walkthrough_output/ --run-id 1
 pyani-plus plot-run --database Neo.db --outdir walkthrough_output/ --run-id 1
+
+
+#NEO
+
+ern jobs submit --name=Augustus_Neo  --threads=1  --memory=8gb --hours=48  --module=augustus  --input="*.fasta" --input="run_augustus.sh" -- ./run_augustus.sh
+qstat -u $USER
