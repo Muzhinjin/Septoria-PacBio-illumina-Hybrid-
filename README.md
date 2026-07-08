@@ -174,6 +174,26 @@ ern jobs submit --name=Septoria --threads=8 --memory=128gb  --hours=48  --input=
 Output: flye_assembly/assembly.fasta
 ern jobs submit --name=Septoriabusco --threads=32 --memory=128gb  --hours=48  --input="Finalassemplyragtag.scaffold.fasta" --module="busco/1.0_88de6b8" --command=busco -- Finalassemplyragtag.scaffold.fasta -l dothideomycetes_odb10 -m genome -o busco_out -c 32
 
+# BUSCO
+
+for fasta in *.fasta
+do
+    name=$(basename "$fasta" .fasta)
+
+    ern jobs submit \
+        --name="BUSCO_${name}" \
+        --threads=32 \
+        --memory=128gb \
+        --hours=48 \
+        --input="$fasta" \
+        --module="busco/1.0_88de6b8" \
+        --command=busco -- \
+        "$fasta" \
+        -l dothideomycetes_odb10 \
+        -m genome \
+        -o "${name}_busco" \
+        -c 32
+done
 # TEs
 conda install -c bioconda trnascan-se
 tRNAscan-SE -o trnas.out -f trnas_struct.out $FASTA
