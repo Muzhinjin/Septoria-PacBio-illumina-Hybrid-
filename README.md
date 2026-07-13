@@ -198,6 +198,113 @@ done
 conda install -c bioconda trnascan-se
 tRNAscan-SE -o trnas.out -f trnas_struct.out $FASTA
 
+# QUAST
+#!/bin/bash
+
+for fasta in *.fasta
+do
+    name=$(basename "$fasta" .fasta)
+
+    ern jobs submit \
+        --name="QUAST_${name}" \
+        --threads=32 \
+        --memory=128gb \
+        --hours=24 \
+        --input="$fasta" \
+        --module="quast/5.2.0" \
+        --command=quast.py -- \
+        "$fasta" \
+        -o "${name}_quast" \
+        -t 32
+done
+
+# BLAST
+
+ern jobs submit \
+    --name=BLASTP_NR \
+    --threads=32 \
+    --memory=128gb \
+    --hours=48 \
+    --input="effectors.faa" \
+    --module="blast/3.0_6bf5a81" \
+    --command=blastp -- \
+    -query effectors.faa \
+    -db nr \
+    -evalue 1e-5 \
+    -max_target_seqs 20 \
+    -max_hsps 1 \
+    -outfmt "6 qseqid sseqid pident length qcovs evalue bitscore stitle" \
+    -num_threads 32 \
+    -out effectors_nr.tsv
+    
+# BLAST against Swissport
+    run_blastp_swissprot.sh
+    #!/bin/bash
+
+for fasta in *.fa
+do
+    sample=$(basename "$fasta" .fa)
+
+    ern jobs submit \
+        --name="SP_${sample}" \
+        --threads=32 \
+        --memory=128gb \
+        --hours=24 \
+        --input="$fasta" \
+        --module="blast/3.0_6bf5a81" \
+        --command=blastp -- \
+        -query "$fasta" \
+        -db swissprot \
+        -evalue 1e-5 \
+        -max_target_seqs 20 \
+        -max_hsps 1 \
+        -outfmt "6 qseqid sseqid pident length qcovs evalue bitscore stitle" \
+        -num_threads 32 \
+        -out "${sample}_swissprot.tsv"
+done
+
+# run_blastp_nr.sh
+    #!/bin/bash
+
+for fasta in *.fa
+do
+    sample=$(basename "$fasta" .fa)
+
+    ern jobs submit \
+        --name="NR_${sample}" \
+        --threads=32 \
+        --memory=128gb \
+        --hours=48 \
+        --input="$fasta" \
+        --module="blast/3.0_6bf5a81" \
+        --command=blastp -- \
+        -query "$fasta" \
+        -db nr \
+        -evalue 1e-5 \
+        -max_target_seqs 20 \
+        -max_hsps 1 \
+        -outfmt "6 qseqid sseqid pident length qcovs evalue bitscore stitle" \
+        -num_threads 32 \
+        -out "${sample}_nr.tsv"
+done
+
+# mkdir OrthoFinder_input
+
+# cp *.fa OrthoFinder_input/
+
+
+ern jobs submit \
+    --name=OrthoFinder \
+    --threads=32 \
+    --memory=128gb \
+    --hours=72 \
+    --input="OrthoFinder_input/*.fa" \
+    --module="orthofinder/1.1_76a008b" \
+    --command=orthofinder -- \
+    -f OrthoFinder_input \
+    -t 32 \
+    -a 32
+
 # Polish Assembly with Illumina Reads
 a. Index the assembly
 bwa index flye_assembly/assembly.fasta
