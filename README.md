@@ -174,6 +174,15 @@ ern jobs submit --name=Septoria --threads=8 --memory=128gb  --hours=48  --input=
 Output: flye_assembly/assembly.fasta
 ern jobs submit --name=Septoriabusco --threads=32 --memory=128gb  --hours=48  --input="Finalassemplyragtag.scaffold.fasta" --module="busco/1.0_88de6b8" --command=busco -- Finalassemplyragtag.scaffold.fasta -l dothideomycetes_odb10 -m genome -o busco_out -c 32
 
+ern jobs submit --name=Augustus_Neo --threads=1 --memory=8gb --hours=48 --module=augustus --input="*.fasta" --input="run_augustus.sh" -- ./run_augustus.sh
+
+# Extrct protein nd cds fles 
+
+gffread NC1_augustus.gff3 \
+    -g NC1.fasta \
+    -x NC1_CDS.fasta \
+    -y NC1_proteins.fasta
+
 # BUSCO
 
 for fasta in *.fasta
