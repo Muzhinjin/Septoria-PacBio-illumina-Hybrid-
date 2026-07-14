@@ -73,6 +73,18 @@ sed -i 's/Chr\([0-9]\+\)/Chr0\1/g' combinedallclassfiedsorted2f.fasta.gbff
 wget https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz
 gunzip uniprot_sprot.fasta.gz
 
+# For ll files
+
+for gff in *_augustus.gff3
+do
+    base=${gff%_augustus.gff3}
+    echo "Processing $base..."
+    gffread "$gff" \
+        -g "${base}.fasta" \
+        -x "${base}_CDS.fasta" \
+        -y "${base}_proteins.fasta"
+done
+
 # make sure they are the same name 
 awk 'BEGIN{FS=OFS="\t"} !/^#/{$1=prevseq} /^>/ {sub(/^>/,"",$1); prevseq=$1; next} 1' input.fasta augustus_output.gff > restored_names.gff
 ern jobs submit \
