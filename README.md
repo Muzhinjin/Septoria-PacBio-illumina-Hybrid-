@@ -69,6 +69,7 @@ sed -i 's/Chr\([0-9]\+\)/Chr0\1/g' combinedallclassfiedsorted2f.fasta.gbff
 # Extraxct prtein sequences
 
 /home/muzhinjin/miniconda3/envs/genome_assembly/bin/getAnnoFasta.pl SL2augustus_septoria.gff
+gffread NC3_augustus.gff3 -g NC3.fasta -x NC3_CDS.fasta -y NC3_proteins.fasta
 
 wget https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz
 gunzip uniprot_sprot.fasta.gz
